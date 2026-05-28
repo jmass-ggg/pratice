@@ -2,10 +2,9 @@ services:
   db:
     image: postgres:16-alpine
     container_name: pratice_db
-    environment:
-      POSTGRES_DB: praticess
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "Kanye@12"
+    restart: always
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -17,16 +16,12 @@ services:
     restart: always
     command: >
       sh -c "python manage.py migrate &&
-             gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --reload"
+             python manage.py collectstatic --noinput &&
+             gunicorn backend.wsgi:application --bind 0.0.0.0:8000"
     volumes:
-      - ./backend:/app
-    environment:
-      DJANGO_SETTINGS_MODULE: backend.settings
-      DB_NAME: praticess
-      DB_USER: postgres
-      DB_PASSWORD: "Kanye@12"
-      DB_HOST: db
-      DB_PORT: "5432"
+      - static_volume:/app/staticfiles
+    env_file:
+      - .env
     depends_on:
       - db
     expose:
@@ -37,10 +32,14 @@ services:
       context: .
       dockerfile: nginx/Dockerfile
     container_name: project_nginx
+    restart: always
     ports:
-      - "127.0.0.1:80:80"
+      - "80:80"
+    volumes:
+      - static_volume:/staticfiles
     depends_on:
       - backend
 
 volumes:
   postgres_data:
+  static_volume:

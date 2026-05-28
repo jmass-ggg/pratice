@@ -1,40 +1,46 @@
 services:
-    db:
-      image: postgres:16-alpine
-      container_name: pratice_db
-      environment:
-        POSTGRES_DB: praticess
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: "Kanye@12"
-      volumes:
-        - postgres_data:/var/lib/postgresql/data
-      ports:
-        - "5431:5432"
+  db:
+    image: postgres:16-alpine
+    container_name: pratice_db
+    environment:
+      POSTGRES_DB: praticess
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "Kanye@12"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-    backend:
-      build: 
-        context: ./backend
-        dockerfile: Dockerfile
-      container_name: pratice_backend
-      restart: always 
-      command: >
-        sh -c "
-         python manage.py migrate &&
-        
-        gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --reload
-        "
-      volumes:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pratice_backend
+    restart: always
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --reload"
+    volumes:
       - ./backend:/app
-      ports:
-      - "8002:8000"
-      environment:
-        DJANGO_SETTINGS_MODULE: backend.settings
-        DB_NAME: praticess
-        DB_USER: postgres
-        DB_PASSWORD: "Kanye@12"
-        DB_HOST: db
-        DB_PORT: "5432"
-      depends_on:
-        - db
+    environment:
+      DJANGO_SETTINGS_MODULE: backend.settings
+      DB_NAME: praticess
+      DB_USER: postgres
+      DB_PASSWORD: "Kanye@12"
+      DB_HOST: db
+      DB_PORT: "5432"
+    depends_on:
+      - db
+    expose:
+      - "8000"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: project_nginx
+    ports:
+      - "127.0.0.1:80:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:

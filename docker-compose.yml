@@ -3,8 +3,10 @@ services:
     image: postgres:16-alpine
     container_name: pratice_db
     restart: always
-    env_file:
-      - .env
+    environment:
+      POSTGRES_DB: praticess
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "Kanye@12"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -19,9 +21,18 @@ services:
              python manage.py collectstatic --noinput &&
              gunicorn backend.wsgi:application --bind 0.0.0.0:8000"
     volumes:
-      - static_volume:/app/staticfiles
-    env_file:
-      - .env
+      - ./backend:/app
+    environment:
+      DJANGO_SETTINGS_MODULE: backend.settings
+      SECRET_KEY: "change-this-secret-key"
+      DEBUG: "False"
+      ALLOWED_HOSTS: "jamesgurung.tech,www.jamesgurung.tech,your_server_ip"
+
+      DB_NAME: praticess
+      DB_USER: postgres
+      DB_PASSWORD: "Kanye@12"
+      DB_HOST: db
+      DB_PORT: "5432"
     depends_on:
       - db
     expose:
@@ -35,11 +46,8 @@ services:
     restart: always
     ports:
       - "80:80"
-    volumes:
-      - static_volume:/staticfiles
     depends_on:
       - backend
 
 volumes:
   postgres_data:
-  static_volume:
